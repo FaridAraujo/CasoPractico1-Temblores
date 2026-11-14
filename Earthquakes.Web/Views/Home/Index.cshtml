@@ -1,0 +1,123 @@
+﻿@using System.Globalization
+@model SearchViewModel
+@{
+    ViewData["Title"] = "Inicio";
+    var cr = CultureInfo.GetCultureInfo("es-CR");
+    var hasResult = Model.Result != null;
+}
+
+<section class="search-hero @(hasResult ? "search-hero-top" : "")">
+    <div class="container text-center">
+        <h1 class="display-5 fw-bold">Buscador de Temblores</h1>
+        <p class="lead mb-4">Escribe el nombre de un país y descubre sus temblores recientes.</p>
+
+        <form asp-action="Index" method="post" class="search-form mx-auto">
+            <div class="input-group input-group-lg">
+                <input asp-for="Country" class="form-control" maxlength="100"
+                       placeholder="Ej: Japan, Chile, Mexico..." autocomplete="off" autofocus
+                       aria-label="Nombre del país" />
+                <button type="submit" class="btn btn-primary px-4">Buscar</button>
+            </div>
+        </form>
+    </div>
+</section>
+
+@if (hasResult)
+{
+    var result = Model.Result!;
+    var country = result.Country;
+
+    <section class="container py-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+            <h2 class="h4 mb-0">
+                Temblores en @country.Name
+                <span class="badge bg-secondary">@result.TotalEarthquakes.ToString("N0", cr) en total</span>
+            </h2>
+            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#countryModal">
+                Ver información del país
+            </button>
+        </div>
+
+        @if (result.Earthquakes.Count == 0)
+        {
+            <div class="alert alert-info">No hay temblores registrados para este país.</div>
+        }
+        else
+        {
+            <p class="text-muted">Mostrando los @result.Earthquakes.Count más recientes.</p>
+
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+                @foreach (var e in result.Earthquakes)
+                {
+                    var level = e.Magnitude >= 5 ? "danger" : e.Magnitude >= 4 ? "warning" : "success";
+                    <div class="col">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex align-items-start gap-3">
+                                    <span class="badge text-bg-@level fs-5">@e.Magnitude?.ToString("0.0")</span>
+                                    <div>
+                                        <h3 class="h6 mb-1">@e.Place</h3>
+                                        <p class="text-muted small mb-1">@e.Time.ToString("dd/MM/yyyy HH:mm") (UTC)</p>
+                                        <p class="small mb-2">Profundidad: @e.Depth?.ToString("0.0") km</p>
+                                        @if (!string.IsNullOrEmpty(e.Url))
+                                        {
+                                            <a href="@e.Url" target="_blank" rel="noopener" class="small">Ver detalle en USGS</a>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </section>
+
+    @* Recuadro flotante con la información del país *@
+    <div class="modal fade" id="countryModal" tabindex="-1" aria-labelledby="countryModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title h5" id="countryModalLabel">@country.Name</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    @if (!string.IsNullOrEmpty(country.FlagUrl))
+                    {
+                        <img src="@country.FlagUrl" alt="Bandera de @country.Name" class="country-flag mb-3" />
+                    }
+                    <dl class="row mb-0">
+                        <dt class="col-5">Nombre oficial</dt><dd class="col-7">@country.OfficialName</dd>
+                        <dt class="col-5">Capital</dt><dd class="col-7">@country.Capital</dd>
+                        <dt class="col-5">Región</dt><dd class="col-7">@country.Region (@country.Subregion)</dd>
+                        <dt class="col-5">Población</dt><dd class="col-7">@country.Population.ToString("N0", cr)</dd>
+                        <dt class="col-5">Moneda</dt><dd class="col-7">@country.Currencies</dd>
+                        <dt class="col-5">Idiomas</dt><dd class="col-7">@country.Languages</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <script>
+            Swal.fire({
+                icon: '@Model.ErrorIcon',
+                title: 'Ups...',
+                text: @Json.Serialize(Model.ErrorMessage),
+                confirmButtonText: 'Entendido'
+            });
+        </script>
+    }
+
+    @if (hasResult)
+    {
+        <script>
+            // Al terminar la búsqueda se abre el recuadro con la info del país
+            new bootstrap.Modal(document.getElementById('countryModal')).show();
+        </script>
+    }
+}

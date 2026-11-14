@@ -1,0 +1,37 @@
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+body {
+  background-color: #f5f7fa;
+}
+
+/* Landing: buscador centrado tipo Google */
+.search-hero {
+  min-height: 70vh;
+  display: flex;
+  align-items: center;
+  background: linear-gradient(135deg, #1d3557, #457b9d);
+  color: #fff;
+  padding: 2rem 0;
+}
+
+.search-hero-top {
+  min-height: auto;
+}
+
+.search-form {
+  max-width: 640px;
+}
+
+.country-flag {
+  max-width: 160px;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+}
